@@ -1,5 +1,7 @@
 // src/providers/streamResolver.js
-// Resolves high-speed streaming links and unblocked cloud embeds across multiple providers
+// Resolves high-speed streaming links, unblocked cloud embeds, and real 4KHDHub releases
+
+import { search4KHdHub, get4KHdHubReleases } from './fourkhdhub.js';
 
 // High-definition public sample streams for benchmarking player & downloader
 const SAMPLE_4K_STREAMS = {
@@ -17,7 +19,7 @@ const SAMPLE_4K_STREAMS = {
   }
 };
 
-export async function resolveStreams(type, id, season = null, episode = null) {
+export async function resolveStreams(type, id, season = null, episode = null, title = null) {
   const streams = [];
 
   // 1. Check for dedicated benchmark stream if available
@@ -33,7 +35,7 @@ export async function resolveStreams(type, id, season = null, episode = null) {
     });
   }
 
-  // 2. High-Reliability Unblocked Multi-Server Embed Mirrors
+  // 2. High-Reliability Unblocked Multi-Server Embed Mirrors (Never blocked by X-Frame-Options)
   if (type === 'movie') {
     streams.push({
       id: "mirror-vidsrc-pm",
@@ -89,7 +91,30 @@ export async function resolveStreams(type, id, season = null, episode = null) {
     });
   }
 
-  // 3. Fallback High-Quality HLS Adaptive Direct Feed
+  // 3. 4KHDHub Real Cloud & BluRay Releases (Just like MovieBox-Tui)
+  if (title) {
+    try {
+      const items = await search4KHdHub(title);
+      if (items.length > 0) {
+        const releases = await get4KHdHubReleases(items[0].pageUrl);
+        for (let i = 0; i < Math.min(releases.length, 4); i++) {
+          const r = releases[i];
+          streams.push({
+            id: `4khdhub-release-${i}`,
+            provider: r.provider,
+            quality: r.quality,
+            format: "direct-link",
+            url: r.hubcloudUrl,
+            canDownload: true
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[4KHDHub fetch error]:', err.message);
+    }
+  }
+
+  // 4. Fallback High-Quality HLS Adaptive Direct Feed
   streams.push({
     id: "hls-fallback-adaptive",
     provider: "Server 4: Phase Adaptive HLS",

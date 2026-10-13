@@ -289,12 +289,10 @@ class PhaseApp {
     `;
 
     try {
-      const [metaRes, streamRes] = await Promise.all([
-        fetch(`/api/meta?type=${type}&id=${id}`).then(r => r.json()),
-        fetch(`/api/streams?type=${type}&id=${id}`).then(r => r.json())
-      ]);
-
+      const metaRes = await fetch(`/api/meta?type=${type}&id=${id}`).then(r => r.json());
       const meta = metaRes.meta || {};
+      const titleParam = meta.name ? `&title=${encodeURIComponent(meta.name)}` : '';
+      const streamRes = await fetch(`/api/streams?type=${type}&id=${id}${titleParam}`).then(r => r.json());
       const streams = streamRes.streams || [];
 
       if (autoPlay && streams.length > 0) {
@@ -350,7 +348,7 @@ class PhaseApp {
                 </div>
                 <div class="stream-actions">
                   <button class="btn btn-primary" onclick="window.app.playStream(${idx})" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
-                    ▶ Play
+                    ${s.format === 'direct-link' ? '🔗 Open' : '▶ Play'}
                   </button>
                   ${s.canDownload ? `
                     <button class="btn btn-glass" onclick="window.app.downloadStream(${idx})" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
@@ -386,6 +384,12 @@ class PhaseApp {
 
   playStream(index) {
     if (this.activeStreams && this.activeStreams[index]) {
+      const s = this.activeStreams[index];
+      if (s.format === 'direct-link') {
+        window.open(s.url, '_blank');
+        this.showToast('Opened 4KHDHub release in new window');
+        return;
+      }
       this.detailModal.style.display = 'none';
       window.cinemaPlayer.open(this.activeStreams, this.activeMeta.name, index);
     }
@@ -394,6 +398,11 @@ class PhaseApp {
   downloadStream(index) {
     if (this.activeStreams && this.activeStreams[index]) {
       const stream = this.activeStreams[index];
+      if (stream.format === 'direct-link') {
+        window.open(stream.url, '_blank');
+        this.showToast('Opening 4KHDHub direct download...');
+        return;
+      }
       window.downloader.queueDownload(this.activeMeta, stream.url);
     }
   }
@@ -401,7 +410,8 @@ class PhaseApp {
   async playEpisode(seriesId, season, episode, epTitle) {
     try {
       this.showToast(`Loading S${season} E${episode}...`);
-      const res = await fetch(`/api/streams?type=series&id=${seriesId}&season=${season}&episode=${episode}`);
+      const titleParam = this.activeMeta?.name ? `&title=${encodeURIComponent(this.activeMeta.name)}` : '';
+      const res = await fetch(`/api/streams?type=series&id=${seriesId}&season=${season}&episode=${episode}${titleParam}`);
       const data = await res.json();
       if (data.success && data.streams && data.streams.length > 0) {
         this.detailModal.style.display = 'none';

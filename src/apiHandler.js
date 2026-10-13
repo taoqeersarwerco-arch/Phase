@@ -79,9 +79,10 @@ export async function handleApiRequest(req, res, parsedUrl) {
     if (pathname === '/api/streams' && req.method === 'GET') {
       const type = searchParams.get('type') || 'movie';
       const id = searchParams.get('id') || '';
+      const title = searchParams.get('title') || null;
       const season = searchParams.get('season') ? parseInt(searchParams.get('season'), 10) : null;
       const episode = searchParams.get('episode') ? parseInt(searchParams.get('episode'), 10) : null;
-      const streams = await resolveStreams(type, id, season, episode);
+      const streams = await resolveStreams(type, id, season, episode, title);
       return sendJson(res, 200, { success: true, streams });
     }
 

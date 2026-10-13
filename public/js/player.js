@@ -67,8 +67,19 @@ class CinemaPlayer {
       this.serverSelect.addEventListener('change', (e) => {
         const idx = parseInt(e.target.value, 10);
         if (this.availableStreams && this.availableStreams[idx]) {
-          this.playStreamItem(this.availableStreams[idx]);
-          window.app?.showToast(`Switched to ${this.availableStreams[idx].provider}`);
+          const s = this.availableStreams[idx];
+          if (s.format === 'direct-link') {
+            window.open(s.url, '_blank');
+            window.app?.showToast('Opened 4KHDHub direct release in new window');
+            // Revert dropdown to active stream index
+            if (this.currentStream) {
+              const activeIdx = this.availableStreams.indexOf(this.currentStream);
+              if (activeIdx !== -1) this.serverSelect.value = activeIdx;
+            }
+            return;
+          }
+          this.playStreamItem(s);
+          window.app?.showToast(`Switched to ${s.provider}`);
         }
       });
     }
@@ -200,17 +211,23 @@ class CinemaPlayer {
     if (this.serverSelect) {
       this.serverSelect.innerHTML = this.availableStreams.map((s, idx) => `
         <option value="${idx}" ${idx === initialIndex ? 'selected' : ''}>
-          ${s.provider || 'Server ' + (idx + 1)} (${s.quality || 'HD'})
+          ${s.format === 'direct-link' ? '🔗 ' : '▶ '}${s.provider || 'Server ' + (idx + 1)} (${s.quality || 'HD'})
         </option>
       `).join('');
       this.serverSelect.style.display = this.availableStreams.length > 1 ? 'block' : 'none';
     }
 
-    const selected = this.availableStreams[initialIndex] || this.availableStreams[0];
+    // Pick first playable stream if initial selection is a direct link
+    let selected = this.availableStreams[initialIndex];
+    if (!selected || selected.format === 'direct-link') {
+      const playable = this.availableStreams.find(s => s.format === 'embed' || s.format === 'hls' || s.format === 'mp4');
+      selected = playable || this.availableStreams[0];
+    }
     this.playStreamItem(selected);
   }
 
   playStreamItem(stream) {
+    if (!stream) return;
     this.currentStream = stream;
 
     // Reset video & iframe state
@@ -221,6 +238,12 @@ class CinemaPlayer {
     this.video.pause();
     this.video.src = '';
     this.iframe.src = '';
+
+    if (stream.format === 'direct-link') {
+      window.open(stream.url, '_blank');
+      window.app?.showToast('Opened 4KHDHub direct release in new window');
+      return;
+    }
 
     if (stream.format === 'embed' && stream.embedUrl) {
       // Use Embed Player
