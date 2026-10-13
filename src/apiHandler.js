@@ -7,6 +7,7 @@ import { resolveStreams } from './providers/streamResolver.js';
 import { startDownload, getDownloadList, cancelDownload } from './downloader.js';
 import { launchPlayer } from './playerLauncher.js';
 import { getNetworkInfo } from './network.js';
+import { getSubtitles, srtToVtt } from './providers/subtitles.js';
 
 export function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -84,6 +85,44 @@ export async function handleApiRequest(req, res, parsedUrl) {
       const episode = searchParams.get('episode') ? parseInt(searchParams.get('episode'), 10) : null;
       const streams = await resolveStreams(type, id, season, episode, title);
       return sendJson(res, 200, { success: true, streams });
+    }
+
+    if (pathname === '/api/subtitles' && req.method === 'GET') {
+      const type = searchParams.get('type') || 'movie';
+      const id = searchParams.get('id') || '';
+      const season = searchParams.get('season') ? parseInt(searchParams.get('season'), 10) : null;
+      const episode = searchParams.get('episode') ? parseInt(searchParams.get('episode'), 10) : null;
+      const subtitles = await getSubtitles(type, id, season, episode);
+      return sendJson(res, 200, { success: true, subtitles });
+    }
+
+    if (pathname === '/api/subtitles/vtt' && req.method === 'GET') {
+      const targetUrl = searchParams.get('url');
+      if (!targetUrl) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('Missing url parameter');
+      }
+      try {
+        const subRes = await fetch(targetUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 Phase/2.0' },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (!subRes.ok) {
+          res.writeHead(502, { 'Content-Type': 'text/plain' });
+          return res.end('Failed to fetch remote subtitle file');
+        }
+        const text = await subRes.text();
+        const vtt = srtToVtt(text);
+        res.writeHead(200, {
+          'Content-Type': 'text/vtt; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'public, max-age=86400'
+        });
+        return res.end(vtt);
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        return res.end('Error converting subtitle: ' + err.message);
+      }
     }
 
     if (pathname === '/api/live' && req.method === 'GET') {

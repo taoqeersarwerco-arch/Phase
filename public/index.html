@@ -262,8 +262,18 @@
         <h3 class="theater-video-title" id="theaterVideoTitle">Loading title...</h3>
       </div>
       <div class="theater-header-actions">
-        <div class="theater-server-switcher">
-          <select class="server-select-dropdown" id="serverSelectDropdown" title="Switch Mirror Server"></select>
+        <div class="custom-server-dropdown" id="customServerDropdown">
+          <button class="server-dropdown-btn" id="serverDropdownBtn" type="button" title="Switch Mirror Server">
+            <span class="server-status-dot"></span>
+            <span class="server-btn-label" id="serverActiveLabel">Server 1: PM VIP</span>
+            <svg class="server-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="server-dropdown-panel" id="serverDropdownPanel" style="display:none;">
+            <div class="server-panel-header">STREAMING SERVERS & MIRRORS</div>
+            <div class="server-panel-list" id="serverPanelList"></div>
+          </div>
         </div>
         <button class="btn-external-player" id="btnLaunchVLC" title="Open in Desktop VLC">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -280,13 +290,63 @@
       <!-- Native HTML5 Video Element -->
       <video id="cinemaVideo" playsinline crossorigin="anonymous"></video>
 
-      <!-- Iframe Fallback for Cloud Embed Streams -->
-      <iframe id="cinemaIframe" style="display:none;" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+      <!-- Redirection-Proof Sandboxed Iframe Fallback for Cloud Embed Streams -->
+      <iframe 
+        id="cinemaIframe" 
+        style="display:none;" 
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" 
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
+        allowfullscreen>
+      </iframe>
+
+      <!-- On-Screen Subtitle Display Overlay (works for both HTML5 & Embeds) -->
+      <div class="cinema-subtitle-overlay" id="cinemaSubtitleOverlay" style="display:none;">
+        <span class="subtitle-text" id="subtitleText"></span>
+      </div>
 
       <!-- Mobile Touch Gesture Indicator Overlay -->
       <div class="touch-feedback-overlay" id="touchFeedback">
         <div class="feedback-icon" id="feedbackIcon"></div>
         <div class="feedback-text" id="feedbackText"></div>
+      </div>
+
+      <!-- Subtitles Configuration Drawer -->
+      <div class="subtitles-drawer" id="subtitlesDrawer" style="display:none;">
+        <div class="subtitles-drawer-header">
+          <div class="subtitles-title-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cc-icon">
+              <rect x="2" y="4" width="20" height="16" rx="3" ry="3"></rect>
+              <path d="M7 15h3a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H8a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h3"></path>
+              <path d="M14 15h3a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-2a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h3"></path>
+            </svg>
+            <h4>Online Subtitles Engine</h4>
+          </div>
+          <button class="subtitles-close-btn" id="closeSubtitlesBtn">&times;</button>
+        </div>
+
+        <div class="subtitles-search-box">
+          <input type="text" id="subtitlesSearchInput" placeholder="Search language (English, Spanish, Hindi)...">
+        </div>
+
+        <div class="subtitles-controls-bar">
+          <div class="subtitles-sync-group">
+            <span class="sync-label">Sync:</span>
+            <button class="sync-btn" id="subSyncMinus" title="Delay -0.5s">-0.5s</button>
+            <span class="sync-value" id="subSyncValue">0.0s</span>
+            <button class="sync-btn" id="subSyncPlus" title="Advance +0.5s">+0.5s</button>
+            <button class="sync-btn-reset" id="subSyncReset">Reset</button>
+          </div>
+          <div class="subtitles-size-group">
+            <span class="size-label">Size:</span>
+            <button class="size-btn" data-size="small">A-</button>
+            <button class="size-btn active" data-size="normal">A</button>
+            <button class="size-btn" data-size="large">A+</button>
+          </div>
+        </div>
+
+        <div class="subtitles-list" id="subtitlesList">
+          <div class="subtitles-loading">Fetching online subtitle tracks...</div>
+        </div>
       </div>
 
       <!-- Custom Cinematic Dark Glass Controls -->
@@ -336,6 +396,15 @@
           </div>
 
           <div class="controls-right">
+            <!-- Subtitles Toggle Button -->
+            <button class="control-btn" id="btnSubtitles" title="Subtitles & Closed Captions (C)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="3" ry="3"></rect>
+                <path d="M7 15h3a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H8a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h3"></path>
+                <path d="M14 15h3a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-2a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h3"></path>
+              </svg>
+            </button>
+
             <!-- Quality & Speed Pickers -->
             <button class="control-badge-btn" id="btnSpeed">1x</button>
             <button class="control-btn" id="btnPip" title="Picture-in-Picture">

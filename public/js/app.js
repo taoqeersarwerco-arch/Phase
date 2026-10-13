@@ -297,7 +297,7 @@ class PhaseApp {
 
       if (autoPlay && streams.length > 0) {
         this.detailModal.style.display = 'none';
-        window.cinemaPlayer.open(streams, meta.name || 'Cinema Presentation', 0);
+        window.cinemaPlayer.open(streams, meta.name || 'Cinema Presentation', 0, { type, id: meta.id || id });
         return;
       }
 
@@ -391,7 +391,11 @@ class PhaseApp {
         return;
       }
       this.detailModal.style.display = 'none';
-      window.cinemaPlayer.open(this.activeStreams, this.activeMeta.name, index);
+      const meta = this.activeMeta || {};
+      window.cinemaPlayer.open(this.activeStreams, meta.name || 'Cinema Presentation', index, {
+        type: meta.type || 'movie',
+        id: meta.id || meta.imdb_id
+      });
     }
   }
 
@@ -415,7 +419,12 @@ class PhaseApp {
       const data = await res.json();
       if (data.success && data.streams && data.streams.length > 0) {
         this.detailModal.style.display = 'none';
-        window.cinemaPlayer.open(data.streams, `${this.activeMeta.name} - ${epTitle}`, 0);
+        window.cinemaPlayer.open(data.streams, `${this.activeMeta.name} - ${epTitle}`, 0, {
+          type: 'series',
+          id: seriesId,
+          season,
+          episode
+        });
       }
     } catch (err) {
       this.showToast('Episode stream error: ' + err.message);
