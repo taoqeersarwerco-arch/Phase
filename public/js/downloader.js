@@ -1,5 +1,5 @@
 // public/js/downloader.js
-// Client-side download manager for Phase
+// Client-side download manager for Phase (Supports Local Desktop Storage & Cloud Browser Downloads)
 
 class DownloaderManager {
   constructor() {
@@ -17,7 +17,7 @@ class DownloaderManager {
       if (!res.ok) return;
       const data = await res.json();
       if (data.success) {
-        this.downloads = data.downloads;
+        this.downloads = data.downloads || [];
         this.renderDownloads();
         this.updateBadge();
 
@@ -86,26 +86,47 @@ class DownloaderManager {
   }
 
   async queueDownload(item, streamUrl) {
+    const title = item.name || item.title || 'video';
+
+    // Direct Browser Download Helper
+    const triggerBrowserDownload = (url) => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/[/\\?%*:|"<>]/g, '_')}.mp4`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.app.showToast(`Starting browser download for "${title}"`);
+    };
+
     try {
       const res = await fetch('/api/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: `dl_${Date.now()}`,
-          title: item.name || item.title,
+          title: title,
           url: streamUrl,
           type: item.type || 'movie'
         })
       });
+
       const data = await res.json();
       if (data.success) {
-        window.app.showToast(`Started downloading "${item.name || item.title}"`);
-        this.fetchDownloads();
+        if (data.isVercel || data.directDownloadUrl) {
+          triggerBrowserDownload(data.directDownloadUrl || streamUrl);
+        } else {
+          window.app.showToast(`Started background download for "${title}"`);
+          this.fetchDownloads();
+        }
       } else {
-        window.app.showToast(`Download failed: ${data.error}`);
+        // Fallback to direct browser download
+        triggerBrowserDownload(streamUrl);
       }
-    } catch (err) {
-      window.app.showToast('Download error: ' + err.message);
+    } catch {
+      // Fallback on error
+      triggerBrowserDownload(streamUrl);
     }
   }
 
