@@ -1,0 +1,361 @@
+/* ==========================================================================
+   PHASE — CINEMA VIDEO PLAYER & TOUCH GESTURES STYLESHEET
+   ========================================================================== */
+
+.player-theater {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Theater Header */
+.player-theater-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 30;
+  transition: opacity 0.3s ease;
+}
+
+.theater-title-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theater-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.theater-video-title {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 500px;
+}
+
+.theater-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-external-player {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #fdba74;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-external-player:hover {
+  background: rgba(249, 115, 22, 0.35);
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+}
+
+.btn-external-player svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theater-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.theater-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* Viewport */
+.player-viewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#cinemaVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#cinemaIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Controls Overlay */
+.cinema-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+  padding: 2.5rem 2rem 1.5rem 2rem;
+  z-index: 30;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.cinema-controls.hidden {
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+}
+
+.player-theater-header.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+/* Scrubber / Progress Bar */
+.progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  transition: height 0.15s ease;
+}
+
+.progress-bar-container:hover {
+  height: 11px;
+}
+
+.buffered-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  width: 0%;
+}
+
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #ec4899);
+  border-radius: 4px;
+  width: 0%;
+}
+
+.progress-scrub-handle {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.progress-bar-container:hover .progress-scrub-handle {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Control Buttons Row */
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls-left, .controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.control-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.control-btn:hover {
+  color: #818cf8;
+  transform: scale(1.15);
+}
+
+.control-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+#btnPlayPause svg {
+  width: 28px;
+  height: 28px;
+}
+
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.volume-slider {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.time-display {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.control-badge-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.control-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Touch Feedback Overlay (For Mobile Gestures) */
+.touch-feedback-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  padding: 1.25rem 2rem;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 40;
+}
+
+.touch-feedback-overlay.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.feedback-icon {
+  font-size: 2rem;
+}
+
+.feedback-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Responsive Touch View */
+@media (max-width: 768px) {
+  .player-theater-header {
+    height: 56px;
+    padding: 0 1rem;
+  }
+  .theater-video-title {
+    font-size: 0.95rem;
+    max-width: 220px;
+  }
+  .btn-external-player {
+    display: none;
+  }
+  .cinema-controls {
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+  .controls-left, .controls-right {
+    gap: 0.75rem;
+  }
+  .volume-container {
+    display: none; /* mobile uses hardware/gesture volume */
+  }
+}
