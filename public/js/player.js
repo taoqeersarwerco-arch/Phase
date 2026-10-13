@@ -1,5 +1,5 @@
 // public/js/player.js
-// Cinema-Grade Video Player & Touch Gestures for Phase
+// Cinema-Grade Video Player & Touch Gestures for Phase (Multi-Server Unblocked Mirrors Support)
 
 class CinemaPlayer {
   constructor() {
@@ -12,6 +12,7 @@ class CinemaPlayer {
     this.touchFeedback = document.getElementById('touchFeedback');
     this.feedbackIcon = document.getElementById('feedbackIcon');
     this.feedbackText = document.getElementById('feedbackText');
+    this.serverSelect = document.getElementById('serverSelectDropdown');
 
     this.btnPlayPause = document.getElementById('btnPlayPause');
     this.playIcon = document.getElementById('playIcon');
@@ -31,6 +32,7 @@ class CinemaPlayer {
     this.btnLaunchVlc = document.getElementById('btnLaunchVLC');
 
     this.hls = null;
+    this.availableStreams = [];
     this.currentStream = null;
     this.hideControlsTimer = null;
     this.playbackSpeeds = [1, 1.25, 1.5, 2, 0.75];
@@ -60,6 +62,17 @@ class CinemaPlayer {
     // Scrubber click & drag
     this.progressBarContainer.addEventListener('click', (e) => this.scrub(e));
 
+    // Server mirror switch
+    if (this.serverSelect) {
+      this.serverSelect.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.value, 10);
+        if (this.availableStreams && this.availableStreams[idx]) {
+          this.playStreamItem(this.availableStreams[idx]);
+          window.app?.showToast(`Switched to ${this.availableStreams[idx].provider}`);
+        }
+      });
+    }
+
     // Volume
     this.volumeSlider.addEventListener('input', (e) => {
       this.video.volume = parseFloat(e.target.value);
@@ -86,7 +99,7 @@ class CinemaPlayer {
     // Launch VLC
     this.btnLaunchVlc.addEventListener('click', () => {
       if (!this.currentStream || !this.currentStream.url) {
-        window.app.showToast('VLC launcher requires direct MP4/HLS stream URL');
+        window.app.showToast('VLC launcher requires direct MP4/HLS stream');
         return;
       }
       this.launchExternal('vlc', this.currentStream.url, this.titleEl.textContent);
@@ -131,14 +144,9 @@ class CinemaPlayer {
   }
 
   bindTouchGestures() {
-    let touchStartX = 0;
-    let touchStartY = 0;
-
     this.video.addEventListener('touchstart', (e) => {
       const now = Date.now();
       const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
 
       // Double tap detection
       if (now - this.lastTap < 300) {
@@ -177,11 +185,42 @@ class CinemaPlayer {
     }, 3500);
   }
 
-  open(stream, title) {
-    this.currentStream = stream;
+  open(streamOrList, title, initialIndex = 0) {
     this.titleEl.textContent = title || 'Now Playing';
     this.theater.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+
+    if (Array.isArray(streamOrList)) {
+      this.availableStreams = streamOrList;
+    } else {
+      this.availableStreams = [streamOrList];
+    }
+
+    // Populate server mirror dropdown
+    if (this.serverSelect) {
+      this.serverSelect.innerHTML = this.availableStreams.map((s, idx) => `
+        <option value="${idx}" ${idx === initialIndex ? 'selected' : ''}>
+          ${s.provider || 'Server ' + (idx + 1)} (${s.quality || 'HD'})
+        </option>
+      `).join('');
+      this.serverSelect.style.display = this.availableStreams.length > 1 ? 'block' : 'none';
+    }
+
+    const selected = this.availableStreams[initialIndex] || this.availableStreams[0];
+    this.playStreamItem(selected);
+  }
+
+  playStreamItem(stream) {
+    this.currentStream = stream;
+
+    // Reset video & iframe state
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+    this.video.pause();
+    this.video.src = '';
+    this.iframe.src = '';
 
     if (stream.format === 'embed' && stream.embedUrl) {
       // Use Embed Player
@@ -200,7 +239,6 @@ class CinemaPlayer {
       const streamUrl = stream.url;
       if (streamUrl.includes('.m3u8')) {
         if (window.Hls && Hls.isSupported()) {
-          if (this.hls) this.hls.destroy();
           this.hls = new Hls({ autoStartLoad: true });
           this.hls.loadSource(streamUrl);
           this.hls.attachMedia(this.video);
@@ -260,7 +298,8 @@ class CinemaPlayer {
     if (!this.video.duration) return;
     const progress = (this.video.currentTime / this.video.duration) * 100;
     this.progressBar.style.width = `${progress}%`;
-    document.getElementById('scrubHandle').style.left = `${progress}%`;
+    const handle = document.getElementById('scrubHandle');
+    if (handle) handle.style.left = `${progress}%`;
 
     const curr = this.formatTime(this.video.currentTime);
     const total = this.formatTime(this.video.duration);

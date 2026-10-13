@@ -1,5 +1,5 @@
 // src/providers/streamResolver.js
-// Resolves high-speed streaming links and embeds across multiple providers
+// Resolves high-speed streaming links and unblocked cloud embeds across multiple providers
 
 // High-definition public sample streams for benchmarking player & downloader
 const SAMPLE_4K_STREAMS = {
@@ -25,7 +25,7 @@ export async function resolveStreams(type, id, season = null, episode = null) {
     const s = SAMPLE_4K_STREAMS[id];
     streams.push({
       id: "source-direct-sample",
-      provider: "Phase Ultra CDN",
+      provider: "Phase Ultra CDN (Direct)",
       quality: s.quality,
       format: "mp4",
       url: s.streamUrl,
@@ -33,63 +33,66 @@ export async function resolveStreams(type, id, season = null, episode = null) {
     });
   }
 
-  // 2. Add Multi-Server Cloud Embed Streams (Vidsrc, SuperEmbed, 2Embed)
+  // 2. High-Reliability Unblocked Multi-Server Embed Mirrors
   if (type === 'movie') {
     streams.push({
-      id: "embed-vidsrc-vip",
-      provider: "MovieBox VIP Cloud",
+      id: "mirror-vidsrc-pm",
+      provider: "Server 1: PM VIP (Fast)",
       quality: "1080p Full HD",
       format: "embed",
-      embedUrl: `https://vidsrc.to/embed/movie/${id}`,
+      embedUrl: `https://vidsrc.pm/embed/movie/${id}`,
       canDownload: false
     });
     streams.push({
-      id: "embed-super",
-      provider: "4kHDHub Stream",
-      quality: "4K UHD / 1080p",
+      id: "mirror-autoembed",
+      provider: "Server 2: AutoEmbed Pro",
+      quality: "4K / 1080p",
       format: "embed",
-      embedUrl: `https://multiembed.mov/?video_id=${id}`,
+      embedUrl: `https://autoembed.co/movie/imdb/${id}`,
       canDownload: false
     });
     streams.push({
-      id: "embed-2embed",
-      provider: "Dramachi Fast Mirror",
-      quality: "720p HD",
+      id: "mirror-2embed",
+      provider: "Server 3: 2Embed Global",
+      quality: "720p / 1080p",
       format: "embed",
       embedUrl: `https://www.2embed.cc/embed/${id}`,
       canDownload: false
     });
-  } else if (type === 'series' && season !== null && episode !== null) {
+  } else if (type === 'series') {
+    const s = season ?? 1;
+    const e = episode ?? 1;
+
     streams.push({
-      id: "embed-vidsrc-series",
-      provider: "MovieBox VIP Cloud",
+      id: "mirror-vidsrc-pm-series",
+      provider: "Server 1: PM VIP (Fast)",
       quality: "1080p Full HD",
       format: "embed",
-      embedUrl: `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`,
+      embedUrl: `https://vidsrc.pm/embed/tv/${id}/${s}/${e}`,
       canDownload: false
     });
     streams.push({
-      id: "embed-super-series",
-      provider: "4kHDHub Stream",
+      id: "mirror-autoembed-series",
+      provider: "Server 2: AutoEmbed Pro",
       quality: "1080p / 720p",
       format: "embed",
-      embedUrl: `https://multiembed.mov/?video_id=${id}&s=${season}&e=${episode}`,
+      embedUrl: `https://autoembed.co/tv/imdb/${id}-${s}-${e}`,
       canDownload: false
     });
     streams.push({
-      id: "embed-2embed-series",
-      provider: "Dramachi Fast Mirror",
-      quality: "720p HD",
+      id: "mirror-2embed-series",
+      provider: "Server 3: 2Embed Global",
+      quality: "720p / 1080p",
       format: "embed",
-      embedUrl: `https://www.2embed.cc/embedtv/${id}&s=${season}&e=${episode}`,
+      embedUrl: `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
       canDownload: false
     });
   }
 
-  // 3. Fallback High-Quality HLS Adaptive Feed
+  // 3. Fallback High-Quality HLS Adaptive Direct Feed
   streams.push({
     id: "hls-fallback-adaptive",
-    provider: "Phase Adaptive HLS (CDN)",
+    provider: "Server 4: Phase Adaptive HLS",
     quality: "1080p Adaptive",
     format: "hls",
     url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",

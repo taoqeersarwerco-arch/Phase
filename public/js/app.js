@@ -299,7 +299,7 @@ class PhaseApp {
 
       if (autoPlay && streams.length > 0) {
         this.detailModal.style.display = 'none';
-        window.cinemaPlayer.open(streams[0], meta.name || 'Cinema Presentation');
+        window.cinemaPlayer.open(streams, meta.name || 'Cinema Presentation', 0);
         return;
       }
 
@@ -387,7 +387,7 @@ class PhaseApp {
   playStream(index) {
     if (this.activeStreams && this.activeStreams[index]) {
       this.detailModal.style.display = 'none';
-      window.cinemaPlayer.open(this.activeStreams[index], this.activeMeta.name);
+      window.cinemaPlayer.open(this.activeStreams, this.activeMeta.name, index);
     }
   }
 
@@ -405,7 +405,7 @@ class PhaseApp {
       const data = await res.json();
       if (data.success && data.streams && data.streams.length > 0) {
         this.detailModal.style.display = 'none';
-        window.cinemaPlayer.open(data.streams[0], `${this.activeMeta.name} - ${epTitle}`);
+        window.cinemaPlayer.open(data.streams, `${this.activeMeta.name} - ${epTitle}`, 0);
       }
     } catch (err) {
       this.showToast('Episode stream error: ' + err.message);
