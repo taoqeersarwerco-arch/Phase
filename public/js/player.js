@@ -769,21 +769,37 @@ class CinemaPlayer {
   }
 
   async launchExternal(player, streamUrl, title) {
-    try {
-      const res = await fetch('/api/player/launch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player, streamUrl, title })
-      });
-      const data = await res.json();
-      if (data.success) {
-        window.app?.showToast(`Launched in desktop ${player.toUpperCase()}`);
-      } else {
-        window.app?.showToast(`External player: ${data.error || 'Check if VLC is installed'}`);
-      }
-    } catch (err) {
-      window.app?.showToast('Launcher error: ' + err.message);
+    if (!streamUrl) {
+      window.app?.showToast('No active stream URL to launch in VLC');
+      return;
     }
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.app?.showToast('Launching mobile VLC app...');
+      window.location.href = `vlc://${streamUrl}`;
+      return;
+    }
+
+    // Desktop
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      try {
+        const res = await fetch('/api/player/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player, streamUrl, title })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.app?.showToast(`Launched in desktop ${player.toUpperCase()} (4K HDR)`);
+          return;
+        }
+      } catch (err) {}
+    }
+
+    // Vercel / Remote or fallback: Download 1-click M3U playlist file for VLC
+    window.app?.showToast('Opening Cinema Stream in VLC...');
+    window.location.href = `/api/player/playlist.m3u?url=${encodeURIComponent(streamUrl)}&title=${encodeURIComponent(title || 'Phase Stream')}`;
   }
 
   escapeHtml(str) {

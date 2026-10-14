@@ -316,6 +316,10 @@ class PhaseApp {
     const bg = meta.background || meta.poster || '';
     const hasEpisodes = type === 'series' && meta.videos && meta.videos.length > 0;
 
+    this.activeStreams = streams;
+    this.activeMeta = meta;
+    this.selectedQuality = 'all';
+
     this.detailModalContent.innerHTML = `
       <div class="detail-hero-box" style="background-image: url('${bg}');">
         <div class="detail-hero-overlay"></div>
@@ -323,10 +327,10 @@ class PhaseApp {
           <div class="hero-badges">
             ${meta.imdbRating ? `<span class="badge-rating">★ ${meta.imdbRating}</span>` : ''}
             <span class="badge-year">${meta.year || meta.releaseInfo || ''}</span>
-            <span class="badge-quality">4K ULTRA</span>
+            <span class="badge-quality">HD / 4K</span>
           </div>
-          <h2 style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: #fff;">${this.escapeHtml(meta.name)}</h2>
-          <p style="color: #94a3b8; font-size: 0.95rem; margin-top: 0.25rem;">
+          <h2 style="font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: #ffffff;">${this.escapeHtml(meta.name)}</h2>
+          <p style="color: #a1a1aa; font-size: 0.9rem; margin-top: 0.25rem;">
             ${(meta.genres || []).join(' • ')} ${meta.runtime ? '• ' + meta.runtime : ''}
           </p>
         </div>
@@ -335,41 +339,37 @@ class PhaseApp {
       <div class="detail-body">
         <p class="detail-description">${this.escapeHtml(meta.description || 'No overview available.')}</p>
 
-        <!-- Stream Sources Selection -->
+        <!-- Stream Sources & Quality Selection -->
         <div class="detail-streams-box">
-          <h4 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem;">Available Streaming Sources</h4>
-          <p style="color: #64748b; font-size: 0.85rem;">Select your preferred stream server or download directly to desktop.</p>
-          <div class="streams-list">
-            ${streams.map((s, idx) => `
-              <div class="stream-row">
-                <div class="stream-row-left">
-                  <span class="stream-quality-tag">${s.quality}</span>
-                  <span class="stream-provider-name">${s.provider}</span>
-                </div>
-                <div class="stream-actions">
-                  <button class="btn btn-primary" onclick="window.app.playStream(${idx})" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
-                    ${s.format === 'direct-link' ? '🔗 Open' : '▶ Play'}
-                  </button>
-                  ${s.canDownload ? `
-                    <button class="btn btn-glass" onclick="window.app.downloadStream(${idx})" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
-                      ⬇ Download
-                    </button>
-                  ` : ''}
-                </div>
-              </div>
-            `).join('')}
+          <div>
+            <h4 style="color: #ffffff; font-size: 1.05rem; font-weight: 700;">Select Quality & Playback</h4>
+            <p class="quality-note">Pick 720p or 1080p for older phones or mobile data for smooth playback.</p>
+          </div>
+
+          <!-- Quality Filter Buttons -->
+          <div class="quality-selector-bar" id="qualitySelectorBar">
+            <button class="quality-btn active" onclick="window.app.filterQuality('all', this)">All</button>
+            <button class="quality-btn" onclick="window.app.filterQuality('2160p', this)">2160p (4K UHD)</button>
+            <button class="quality-btn" onclick="window.app.filterQuality('1440p', this)">1440p (2K QHD)</button>
+            <button class="quality-btn" onclick="window.app.filterQuality('1080p', this)">1080p (Full HD)</button>
+            <button class="quality-btn" onclick="window.app.filterQuality('720p', this)">720p (HD Fast)</button>
+          </div>
+
+          <!-- Streams List Container -->
+          <div class="streams-list" id="streamsListContent">
+            ${this.renderStreamRows(streams, 'all')}
           </div>
         </div>
 
         <!-- TV Series Episode Browser -->
         ${hasEpisodes ? `
           <div class="episodes-selector">
-            <h4 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem;">Episodes</h4>
+            <h4 style="color: #ffffff; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem;">Episodes</h4>
             <div class="episodes-grid">
-              ${meta.videos.slice(0, 24).map(v => `
+              ${meta.videos.slice(0, 36).map(v => `
                 <div class="episode-card" onclick="window.app.playEpisode('${meta.id}', ${v.season}, ${v.episode}, '${this.escapeHtml(v.name || 'Episode ' + v.episode)}')">
-                  <img class="episode-thumb" src="${v.thumbnail || ''}" alt="" onerror="this.src='https://placehold.co/320x180/1a1a28/ffffff?text=Episode'">
-                  <div class="episode-title">S${v.season} E${v.episode}: ${this.escapeHtml(v.name || 'Episode')}</div>
+                  <div style="font-weight:700; color:#fff; font-size:0.85rem; margin-bottom:2px;">S${v.season} E${v.episode}</div>
+                  <div style="color:#a1a1aa; font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${this.escapeHtml(v.name || 'Episode ' + v.episode)}</div>
                 </div>
               `).join('')}
             </div>
@@ -377,9 +377,111 @@ class PhaseApp {
         ` : ''}
       </div>
     `;
+  }
 
-    this.activeStreams = streams;
-    this.activeMeta = meta;
+  renderStreamRows(streams, qualityFilter = 'all') {
+    let filtered = streams;
+    if (qualityFilter !== 'all') {
+      filtered = streams.filter(s => s.qualityCategory === qualityFilter);
+      if (filtered.length === 0) {
+        return `
+          <div style="padding:1.25rem; text-align:center; color:#71717a; font-size:0.85rem;">
+            No direct ${qualityFilter} streams found. Try "All" or 1080p/720p.
+          </div>
+        `;
+      }
+    }
+
+    return filtered.map((s) => {
+      const origIdx = streams.indexOf(s);
+      const isTorrent = s.format === 'torrent';
+      const cleanQuality = s.quality || 'HD';
+      const cleanProvider = s.provider || 'Stream';
+
+      return `
+        <div class="stream-row">
+          <div class="stream-row-left">
+            <span class="stream-quality-tag">${cleanQuality}</span>
+            <span class="stream-provider-name">${cleanProvider}</span>
+          </div>
+          <div class="stream-actions">
+            <!-- Primary Action: Watch in VLC -->
+            <button class="btn-vlc" onclick="window.app.launchInVlc(${origIdx})" title="Open in VLC (Mobile or Desktop)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L3 19h18L12 2zm0 4.5l5.5 10.5h-11L12 6.5z"/></svg>
+              <span>Watch in VLC</span>
+            </button>
+            <!-- Secondary Action: Play in Browser (if not raw torrent) -->
+            ${!isTorrent ? `
+              <button class="btn-browser" onclick="window.app.playStream(${origIdx})" title="Play in browser web player">
+                ▶ In-Browser
+              </button>
+            ` : ''}
+            <!-- Download Action -->
+            ${s.canDownload ? `
+              <button class="btn-browser" onclick="window.app.downloadStream(${origIdx})" title="Download or open direct link">
+                ⬇ Download
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  filterQuality(quality, btnEl) {
+    this.selectedQuality = quality;
+    const container = document.getElementById('qualitySelectorBar');
+    if (container) {
+      container.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+    }
+    if (btnEl) btnEl.classList.add('active');
+
+    const listEl = document.getElementById('streamsListContent');
+    if (listEl && this.activeStreams) {
+      listEl.innerHTML = this.renderStreamRows(this.activeStreams, quality);
+    }
+  }
+
+  launchInVlc(index) {
+    if (!this.activeStreams || !this.activeStreams[index]) return;
+    const stream = this.activeStreams[index];
+    const title = this.activeMeta?.name || 'Phase Stream';
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (stream.format === 'direct-link') {
+      window.open(stream.url, '_blank');
+      this.showToast('Opening 4KHDHub direct release...');
+      return;
+    }
+
+    if (isMobile) {
+      // Mobile VLC Deep-Link
+      this.showToast('Launching stream in mobile VLC app...');
+      const vlcUrl = `vlc://${stream.url}`;
+      window.location.href = vlcUrl;
+    } else {
+      // Desktop: If on localhost, launch directly; otherwise download 1-click M3U stream file
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        fetch('/api/player/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player: 'vlc', streamUrl: stream.url, title })
+        }).then(r => r.json()).then(data => {
+          if (data.success) {
+            this.showToast('Launched in Desktop VLC Media Player (4K HDR)');
+          } else {
+            window.location.href = `/api/player/playlist.m3u?url=${encodeURIComponent(stream.url)}&title=${encodeURIComponent(title)}`;
+            this.showToast('Opening Cinema Stream in VLC...');
+          }
+        }).catch(() => {
+          window.location.href = `/api/player/playlist.m3u?url=${encodeURIComponent(stream.url)}&title=${encodeURIComponent(title)}`;
+        });
+      } else {
+        // Hosted on Vercel
+        this.showToast('Opening Cinema Stream in VLC...');
+        window.location.href = `/api/player/playlist.m3u?url=${encodeURIComponent(stream.url)}&title=${encodeURIComponent(title)}`;
+      }
+    }
   }
 
   playStream(index) {
@@ -418,13 +520,19 @@ class PhaseApp {
       const res = await fetch(`/api/streams?type=series&id=${seriesId}&season=${season}&episode=${episode}${titleParam}`);
       const data = await res.json();
       if (data.success && data.streams && data.streams.length > 0) {
-        this.detailModal.style.display = 'none';
-        window.cinemaPlayer.open(data.streams, `${this.activeMeta.name} - ${epTitle}`, 0, {
-          type: 'series',
-          id: seriesId,
-          season,
-          episode
-        });
+        this.activeStreams = data.streams;
+        const streamsContainer = document.getElementById('streamsListContent');
+        if (streamsContainer) {
+          streamsContainer.innerHTML = this.renderStreamRows(data.streams, this.selectedQuality || 'all');
+          this.showToast(`Loaded streams for S${season} E${episode}`);
+        } else {
+          window.cinemaPlayer.open(data.streams, `${this.activeMeta.name} - ${epTitle}`, 0, {
+            type: 'series',
+            id: seriesId,
+            season,
+            episode
+          });
+        }
       }
     } catch (err) {
       this.showToast('Episode stream error: ' + err.message);

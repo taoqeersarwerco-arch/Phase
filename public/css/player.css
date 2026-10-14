@@ -58,7 +58,7 @@
   max-width: 500px;
 }
 
-/* Custom Glassmorphism Server Switcher */
+/* Custom Minimalist Server Switcher */
 .custom-server-dropdown {
   position: relative;
 }
@@ -67,26 +67,21 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  background: rgba(18, 18, 30, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
-  padding: 0.45rem 0.85rem;
-  border-radius: 9999px;
+  background: #141414;
+  border: 1px solid #27272a;
+  color: #ffffff;
+  padding: 0.4rem 0.85rem;
+  border-radius: 4px;
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
 }
 
 .server-dropdown-btn:hover {
-  background: rgba(30, 30, 50, 0.85);
-  border-color: rgba(99, 102, 241, 0.5);
-  color: #fff;
-  transform: translateY(-1px);
+  background: #1f1f1f;
+  border-color: #ffffff;
 }
 
 .server-status-dot {
@@ -94,7 +89,6 @@
   height: 7px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 8px #10b981;
   display: inline-block;
   flex-shrink: 0;
 }
@@ -109,8 +103,8 @@
 .server-chevron-icon {
   width: 14px;
   height: 14px;
-  stroke: #94a3b8;
-  transition: transform 0.2s ease;
+  stroke: #a1a1aa;
+  transition: transform 0.15s ease;
   flex-shrink: 0;
 }
 
@@ -120,32 +114,24 @@
 
 .server-dropdown-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   right: 0;
   width: 290px;
-  background: rgba(13, 13, 24, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(99, 102, 241, 0.15);
-  padding: 0.5rem;
+  background: #111111;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+  padding: 0.4rem;
   z-index: 100;
-  animation: serverPanelFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes serverPanelFade {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .server-panel-header {
   font-size: 0.65rem;
   font-weight: 800;
-  color: #64748b;
+  color: #71717a;
   letter-spacing: 0.08em;
-  padding: 0.4rem 0.6rem 0.3rem 0.6rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #222222;
   margin-bottom: 0.35rem;
 }
 
@@ -153,20 +139,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
   gap: 0.5rem;
 }
 
 .server-panel-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #1c1c1c;
 }
 
 .server-panel-item.active {
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: #222226;
+  border: 1px solid #ffffff;
 }
 
 .server-item-left {
@@ -178,46 +164,52 @@
 .server-item-name {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
 }
 
 .server-item-type {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .server-item-badge {
   font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  border-radius: 3px;
+  background: #27272a;
+  color: #ffffff;
 }
 
 .server-panel-item.active .server-item-badge {
-  background: #6366f1;
-  color: #fff;
+  background: #ffffff;
+  color: #000000;
 }
 
 .theater-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .btn-external-player {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(249, 115, 22, 0.2);
-  border: 1px solid rgba(249, 115, 22, 0.4);
-  color: #fdba74;
-  padding: 0.45rem 1rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  gap: 0.45rem;
+  background: #ffffff;
+  border: none;
+  color: #000000;
+  padding: 0.42rem 0.95rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-external-player:hover {
+  background: #e4e4e7;
+}
   transition: all 0.2s ease;
 }
 

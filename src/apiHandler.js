@@ -212,12 +212,38 @@ export async function handleApiRequest(req, res, parsedUrl) {
       if (isVercel) {
         return sendJson(res, 200, {
           success: false,
-          error: 'External desktop player (VLC/MPV) is available when running Phase locally on your desktop.'
+          error: 'External desktop player launcher runs when hosting locally. Use the 1-click VLC Stream Playlist (.m3u) or mobile VLC deep-link.'
         });
       }
       const body = await parseBody(req);
       const result = launchPlayer(body.streamUrl, body.player, body.title);
       return sendJson(res, 200, result);
+    }
+
+    if (pathname === '/api/player/playlist.m3u' && req.method === 'GET') {
+      const streamUrl = searchParams.get('url');
+      const title = searchParams.get('title') || 'Phase Stream';
+      const sub = searchParams.get('sub');
+
+      if (!streamUrl) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('Missing stream url');
+      }
+
+      const cleanTitle = title.replace(/[\r\n]/g, ' ');
+      let m3u = `#EXTM3U\n#EXTINF:-1,${cleanTitle}\n`;
+      if (sub) {
+        m3u += `#EXTVLCOPT:sub-file=${sub}\n`;
+      }
+      m3u += `${streamUrl}\n`;
+
+      const safeFilename = cleanTitle.replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_') || 'Phase_Stream';
+      res.writeHead(200, {
+        'Content-Type': 'application/x-mpegurl',
+        'Content-Disposition': `attachment; filename="${safeFilename}.m3u"`,
+        'Cache-Control': 'no-cache'
+      });
+      return res.end(m3u);
     }
 
     if (pathname === '/api/network' && req.method === 'GET') {
