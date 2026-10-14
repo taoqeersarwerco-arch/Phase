@@ -1142,18 +1142,51 @@ body {
   border: 1px solid #3f3f46;
 }
 
+.stream-type-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-embed {
+  background: #1c1c1f;
+  color: #a1a1aa;
+  border: 1px solid #3f3f46;
+}
+
+.badge-torrent {
+  background: #18181b;
+  color: #e4e4e7;
+  border: 1px solid #52525b;
+}
+
+.badge-direct {
+  background: #27272a;
+  color: #ffffff;
+  border: 1px solid #71717a;
+}
+
+.badge-locker {
+  background: #1c1c1f;
+  color: #a1a1aa;
+  border: 1px solid #3f3f46;
+}
+
 .stream-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.btn-vlc {
+.btn-primary-action, .btn-vlc {
   background: #ffffff;
   color: #000000;
   font-weight: 700;
   font-size: 0.82rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.42rem 0.9rem;
   border-radius: 4px;
   border: none;
   cursor: pointer;
@@ -1161,23 +1194,28 @@ body {
   align-items: center;
   gap: 0.35rem;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
-.btn-vlc:hover {
+.btn-primary-action:hover, .btn-vlc:hover {
   background: #e4e4e7;
 }
 
-.btn-browser {
+.btn-secondary-action, .btn-browser {
   background: transparent;
   color: #ffffff;
   border: 1px solid var(--border-highlight);
   font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.4rem 0.8rem;
+  padding: 0.42rem 0.8rem;
   border-radius: 4px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
-.btn-browser:hover {
+.btn-secondary-action:hover, .btn-browser:hover {
   border-color: #ffffff;
   background: #27272a;
 }

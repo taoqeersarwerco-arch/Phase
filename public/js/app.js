@@ -394,34 +394,63 @@ class PhaseApp {
 
     return filtered.map((s) => {
       const origIdx = streams.indexOf(s);
-      const isTorrent = s.format === 'torrent';
+      const isTorrent = s.streamType === 'torrent' || s.format === 'torrent' || (s.url && s.url.startsWith('magnet:'));
+      const isEmbed = s.streamType === 'embed' || s.format === 'embed' || (s.url && (s.url.includes('autoembed.co') || s.url.includes('vidsrc.pm') || s.url.includes('2embed.cc')));
+      const isDirectLink = s.streamType === 'locker' || s.format === 'direct-link';
+      const isDirectMedia = !isTorrent && !isEmbed && !isDirectLink && s.url && s.url.startsWith('http');
+
       const cleanQuality = s.quality || 'HD';
       const cleanProvider = s.provider || 'Stream';
+
+      let typeBadge = '';
+      let actionButtons = '';
+
+      if (isEmbed) {
+        typeBadge = `<span class="stream-type-tag badge-embed">Web Mirror</span>`;
+        actionButtons = `
+          <button class="btn-primary-action" onclick="window.app.playStream(${origIdx})" title="Play smoothly inside browser">
+            ▶ Play in Browser
+          </button>
+        `;
+      } else if (isTorrent) {
+        typeBadge = `<span class="stream-type-tag badge-torrent">P2P Magnet</span>`;
+        actionButtons = `
+          <button class="btn-primary-action" onclick="window.app.openMagnet(${origIdx})" title="Open torrent in qBittorrent or torrent app">
+            🧲 Open in qBittorrent
+          </button>
+          <button class="btn-secondary-action" onclick="window.app.copyMagnet(${origIdx})" title="Copy magnet link to clipboard">
+            📋 Copy Magnet
+          </button>
+        `;
+      } else if (isDirectMedia) {
+        typeBadge = `<span class="stream-type-tag badge-direct">Direct Stream</span>`;
+        actionButtons = `
+          <button class="btn-primary-action" onclick="window.app.launchInVlc(${origIdx})" title="Watch directly in VLC Media Player">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L3 19h18L12 2zm0 4.5l5.5 10.5h-11L12 6.5z"/></svg>
+            <span>Watch in VLC</span>
+          </button>
+          <button class="btn-secondary-action" onclick="window.app.playStream(${origIdx})" title="Play in browser web player">
+            ▶ In-Browser
+          </button>
+        `;
+      } else if (isDirectLink) {
+        typeBadge = `<span class="stream-type-tag badge-locker">Cloud Locker</span>`;
+        actionButtons = `
+          <button class="btn-primary-action" onclick="window.app.downloadStream(${origIdx})" title="Open cloud locker release">
+            ⬇ Open Cloud Locker
+          </button>
+        `;
+      }
 
       return `
         <div class="stream-row">
           <div class="stream-row-left">
             <span class="stream-quality-tag">${cleanQuality}</span>
+            ${typeBadge}
             <span class="stream-provider-name">${cleanProvider}</span>
           </div>
           <div class="stream-actions">
-            <!-- Primary Action: Watch in VLC -->
-            <button class="btn-vlc" onclick="window.app.launchInVlc(${origIdx})" title="Open in VLC (Mobile or Desktop)">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L3 19h18L12 2zm0 4.5l5.5 10.5h-11L12 6.5z"/></svg>
-              <span>Watch in VLC</span>
-            </button>
-            <!-- Secondary Action: Play in Browser (if not raw torrent) -->
-            ${!isTorrent ? `
-              <button class="btn-browser" onclick="window.app.playStream(${origIdx})" title="Play in browser web player">
-                ▶ In-Browser
-              </button>
-            ` : ''}
-            <!-- Download Action -->
-            ${s.canDownload ? `
-              <button class="btn-browser" onclick="window.app.downloadStream(${origIdx})" title="Download or open direct link">
-                ⬇ Download
-              </button>
-            ` : ''}
+            ${actionButtons}
           </div>
         </div>
       `;
@@ -442,11 +471,48 @@ class PhaseApp {
     }
   }
 
+  openMagnet(index) {
+    if (!this.activeStreams || !this.activeStreams[index]) return;
+    const stream = this.activeStreams[index];
+    if (stream.url && stream.url.startsWith('magnet:')) {
+      this.showToast('Opening torrent in qBittorrent...');
+      window.location.href = stream.url;
+    }
+  }
+
+  copyMagnet(index) {
+    if (!this.activeStreams || !this.activeStreams[index]) return;
+    const stream = this.activeStreams[index];
+    if (stream.url && stream.url.startsWith('magnet:')) {
+      navigator.clipboard.writeText(stream.url).then(() => {
+        this.showToast('Magnet link copied to clipboard!');
+      }).catch(() => {
+        this.showToast('Failed to copy magnet link');
+      });
+    }
+  }
+
   launchInVlc(index) {
     if (!this.activeStreams || !this.activeStreams[index]) return;
     const stream = this.activeStreams[index];
     const title = this.activeMeta?.name || 'Phase Stream';
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (!stream.url || stream.url === 'undefined') {
+      this.showToast('Web mirror cannot open in VLC. Click "Play in Browser" instead.');
+      return;
+    }
+
+    if (stream.url.startsWith('magnet:')) {
+      this.openMagnet(index);
+      return;
+    }
+
+    if (stream.format === 'embed' || stream.streamType === 'embed' || stream.url.includes('autoembed.co') || stream.url.includes('vidsrc.pm') || stream.url.includes('2embed.cc')) {
+      this.showToast('Web mirrors run inside browser. Opening Cinema Player...');
+      this.playStream(index);
+      return;
+    }
 
     if (stream.format === 'direct-link') {
       window.open(stream.url, '_blank');

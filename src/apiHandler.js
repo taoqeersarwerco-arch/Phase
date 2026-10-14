@@ -225,9 +225,19 @@ export async function handleApiRequest(req, res, parsedUrl) {
       const title = searchParams.get('title') || 'Phase Stream';
       const sub = searchParams.get('sub');
 
-      if (!streamUrl) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        return res.end('Missing stream url');
+      if (!streamUrl || streamUrl === 'undefined' || streamUrl === 'null' || streamUrl.trim() === '') {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('Error: Missing or invalid video media URL. Web mirrors must be played in browser.');
+      }
+
+      if (streamUrl.startsWith('magnet:')) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('Error: P2P BitTorrent magnets must be opened in a torrent client (qBittorrent), not a VLC M3U file.');
+      }
+
+      if (streamUrl.includes('autoembed.co') || streamUrl.includes('vidsrc.pm') || streamUrl.includes('2embed.cc')) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('Error: Web embed mirrors are HTML pages that run inside a browser, not VLC.');
       }
 
       const cleanTitle = title.replace(/[\r\n]/g, ' ');

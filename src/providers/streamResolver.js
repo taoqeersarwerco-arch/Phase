@@ -46,13 +46,19 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
 
   // 2. High-Reliability Unblocked Multi-Server Embed Mirrors (Fallback)
   if (type === 'movie') {
+    const embed1 = `https://autoembed.co/movie/imdb/${id}`;
+    const embed2 = `https://vidsrc.pm/embed/movie/${id}`;
+    const embed3 = `https://www.2embed.cc/embed/${id}`;
+
     streams.push({
       id: "mirror-autoembed",
       provider: "Server 1: AutoEmbed 4K",
       quality: "4K UHD / 1080p",
       qualityCategory: "2160p",
       format: "embed",
-      embedUrl: `https://autoembed.co/movie/imdb/${id}`,
+      streamType: "embed",
+      url: embed1,
+      embedUrl: embed1,
       canDownload: false
     });
     streams.push({
@@ -61,7 +67,9 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
       quality: "1080p Full HD",
       qualityCategory: "1080p",
       format: "embed",
-      embedUrl: `https://vidsrc.pm/embed/movie/${id}`,
+      streamType: "embed",
+      url: embed2,
+      embedUrl: embed2,
       canDownload: false
     });
     streams.push({
@@ -70,12 +78,17 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
       quality: "720p HD",
       qualityCategory: "720p",
       format: "embed",
-      embedUrl: `https://www.2embed.cc/embed/${id}`,
+      streamType: "embed",
+      url: embed3,
+      embedUrl: embed3,
       canDownload: false
     });
   } else if (type === 'series') {
     const s = season ?? 1;
     const e = episode ?? 1;
+    const embed1 = `https://autoembed.co/tv/imdb/${id}-${s}-${e}`;
+    const embed2 = `https://vidsrc.pm/embed/tv/${id}/${s}/${e}`;
+    const embed3 = `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`;
 
     streams.push({
       id: "mirror-autoembed-series",
@@ -83,7 +96,9 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
       quality: "1080p Full HD",
       qualityCategory: "1080p",
       format: "embed",
-      embedUrl: `https://autoembed.co/tv/imdb/${id}-${s}-${e}`,
+      streamType: "embed",
+      url: embed1,
+      embedUrl: embed1,
       canDownload: false
     });
     streams.push({
@@ -92,7 +107,9 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
       quality: "1080p Full HD",
       qualityCategory: "1080p",
       format: "embed",
-      embedUrl: `https://vidsrc.pm/embed/tv/${id}/${s}/${e}`,
+      streamType: "embed",
+      url: embed2,
+      embedUrl: embed2,
       canDownload: false
     });
     streams.push({
@@ -101,7 +118,9 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
       quality: "720p HD",
       qualityCategory: "720p",
       format: "embed",
-      embedUrl: `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+      streamType: "embed",
+      url: embed3,
+      embedUrl: embed3,
       canDownload: false
     });
   }
@@ -120,6 +139,7 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
             quality: r.quality,
             qualityCategory: detectQualityCategory(r.quality, r.title),
             format: "direct-link",
+            streamType: "locker",
             url: r.hubcloudUrl,
             canDownload: true
           });
@@ -137,6 +157,7 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
     quality: "720p / 1080p Adaptive",
     qualityCategory: "720p",
     format: "hls",
+    streamType: "direct",
     url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
     canDownload: true
   });
