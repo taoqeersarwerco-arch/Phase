@@ -1,41 +1,34 @@
 // src/providers/streamResolver.js
-// Resolves high-speed streaming links, unblocked cloud embeds, and real 4KHDHub releases
+// Resolves high-speed streaming links, Stremio native streams, and unblocked mirrors
 
 import { search4KHdHub, get4KHdHubReleases } from './fourkhdhub.js';
-
-// High-definition public sample streams for benchmarking player & downloader
-const SAMPLE_4K_STREAMS = {
-  "tt0111161": { // The Shawshank Redemption
-    streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    quality: "1080p FHD"
-  },
-  "tt0468569": { // The Dark Knight
-    streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    quality: "4K UHD"
-  },
-  "tt1375666": { // Inception
-    streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-    quality: "4K UHD"
-  }
-};
+import { getStremioStreams } from './stremioStreams.js';
 
 export async function resolveStreams(type, id, season = null, episode = null, title = null) {
   const streams = [];
 
-  // 1. Check for dedicated benchmark stream if available
-  if (SAMPLE_4K_STREAMS[id]) {
-    const s = SAMPLE_4K_STREAMS[id];
-    streams.push({
-      id: "source-direct-sample",
-      provider: "Phase Ultra CDN (Direct)",
-      quality: s.quality,
-      format: "mp4",
-      url: s.streamUrl,
-      canDownload: true
-    });
+  // 1. Fetch Direct Streams & P2P Swarms from Stremio Addon Protocol
+  try {
+    const stremioResults = await getStremioStreams(type, id, season, episode);
+    
+    // Separate direct HTTP/HLS streams from torrent swarms
+    const directHttp = stremioResults.filter(s => s.isNative);
+    const p2pSwarms = stremioResults.filter(s => !s.isNative);
+
+    // Add Direct High-Speed Streams first (Netflix-grade native playback)
+    for (const s of directHttp) {
+      streams.push(s);
+    }
+
+    // Add top P2P Swarm releases (playable in VLC/MPV or download)
+    for (let i = 0; i < Math.min(p2pSwarms.length, 3); i++) {
+      streams.push(p2pSwarms[i]);
+    }
+  } catch (err) {
+    console.warn('[Stremio stream resolver error]:', err.message);
   }
 
-  // 2. High-Reliability Unblocked Multi-Server Embed Mirrors (Never blocked by X-Frame-Options)
+  // 2. High-Reliability Unblocked Multi-Server Embed Mirrors (Fallback)
   if (type === 'movie') {
     streams.push({
       id: "mirror-vidsrc-pm",
@@ -91,13 +84,13 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
     });
   }
 
-  // 3. 4KHDHub Real Cloud & BluRay Releases (Just like MovieBox-Tui)
+  // 3. 4KHDHub Real Cloud & BluRay Releases (Download & Cloud Lockers)
   if (title) {
     try {
       const items = await search4KHdHub(title);
       if (items.length > 0) {
         const releases = await get4KHdHubReleases(items[0].pageUrl);
-        for (let i = 0; i < Math.min(releases.length, 4); i++) {
+        for (let i = 0; i < Math.min(releases.length, 3); i++) {
           const r = releases[i];
           streams.push({
             id: `4khdhub-release-${i}`,
@@ -117,7 +110,7 @@ export async function resolveStreams(type, id, season = null, episode = null, ti
   // 4. Fallback High-Quality HLS Adaptive Direct Feed
   streams.push({
     id: "hls-fallback-adaptive",
-    provider: "Server 4: Phase Adaptive HLS",
+    provider: "Phase Adaptive HLS (CDN)",
     quality: "1080p Adaptive",
     format: "hls",
     url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",

@@ -627,6 +627,12 @@ class CinemaPlayer {
       return;
     }
 
+    if (stream.format === 'torrent') {
+      this.launchExternal('vlc', stream.url, this.titleEl.textContent);
+      window.app?.showToast(`Launching P2P stream in desktop player (${stream.quality})`);
+      return;
+    }
+
     if (stream.format === 'embed' && stream.embedUrl) {
       // Use Redirection-Proof Sandboxed Embed Player
       this.video.style.display = 'none';

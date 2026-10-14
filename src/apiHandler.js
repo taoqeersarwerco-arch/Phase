@@ -8,6 +8,7 @@ import { startDownload, getDownloadList, cancelDownload } from './downloader.js'
 import { launchPlayer } from './playerLauncher.js';
 import { getNetworkInfo } from './network.js';
 import { getSubtitles, srtToVtt } from './providers/subtitles.js';
+import { Readable } from 'stream';
 
 export function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -122,6 +123,52 @@ export async function handleApiRequest(req, res, parsedUrl) {
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         return res.end('Error converting subtitle: ' + err.message);
+      }
+    }
+
+    if (pathname === '/api/proxy/stream' && req.method === 'GET') {
+      const targetUrl = searchParams.get('url');
+      if (!targetUrl) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('Missing stream url');
+      }
+
+      try {
+        const rangeHeader = req.headers['range'];
+        const fetchHeaders = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        };
+        if (rangeHeader) fetchHeaders['Range'] = rangeHeader;
+
+        const streamRes = await fetch(targetUrl, {
+          headers: fetchHeaders,
+          signal: AbortSignal.timeout(15000)
+        });
+
+        const headers = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Range, Content-Type',
+          'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges',
+          'Content-Type': streamRes.headers.get('content-type') || 'video/mp4',
+          'Accept-Ranges': 'bytes'
+        };
+
+        if (streamRes.headers.get('content-range')) {
+          headers['Content-Range'] = streamRes.headers.get('content-range');
+        }
+        if (streamRes.headers.get('content-length')) {
+          headers['Content-Length'] = streamRes.headers.get('content-length');
+        }
+
+        res.writeHead(streamRes.status, headers);
+        const nodeStream = Readable.fromWeb(streamRes.body);
+        nodeStream.pipe(res);
+        return;
+      } catch (err) {
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'text/plain' });
+          return res.end('Proxy stream error: ' + err.message);
+        }
       }
     }
 
